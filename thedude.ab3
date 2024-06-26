@@ -14,7 +14,7 @@
 ; MakeSmallest    = 0
 ; FuncOptimize    = 1
 ; Version         = 0.0.0
-; NumberOfBuilds  = 59
+; NumberOfBuilds  = 63
 ; 
 ; Debugger
 ; -------------------------------------------------------
@@ -30,8 +30,8 @@
 ; 
 ; Editor
 ; -------------------------------------------------------
-; CursorLine      = 65
-; CursorColumn    = 5
+; CursorLine      = 35
+; CursorColumn    = 12
 ; LabelSearch     = ""
 ; LabelRemark     = 1
 ; LabelAll        = 0
@@ -85,8 +85,68 @@ BitMap 1,320,256,5
 #DUDE_HEIGHT=8
 #DUDE_WIDTH=7
 
-LoadBitMap 0,"amiga:thedude/assets/shapes_wip.pic",0
+Gosub getDudeShapes
 
+
+
+BLITZ
+
+Slice 0,44,320,256,$fff8,5,0,32,320,320
+Show 0
+Use Palette 0
+
+
+; bitmap currently shown (double-buffer)
+bitm.b=0
+
+
+; all of this should go into a type
+
+dudeShape = 0
+shapeIndex = 0
+shapeDelta = 1
+shapeWait = 0
+shapeFramesWait=4
+
+
+; game loop
+
+While(Joyb(0)=0)
+  Gosub moveDude
+  Gosub doubleBuf
+
+  VWait
+Wend
+End
+
+
+doubleBuf:
+  Show bitm
+  bitm = 1-bitm
+  Use BitMap bitm
+  Cls
+Return
+
+
+.moveDude
+  Blit shapeIndex,posX,50
+  shapeWait = shapeWait + 1
+  If shapeWait = shapeFramesWait
+
+    shapeIndex = shapeIndex+shapeDelta
+    If shapeIndex = 3 OR shapeIndex=-1
+      shapeDelta = shapeDelta * -1
+      shapeIndex = shapeIndex+shapeDelta
+    End If
+    shapeWait=0
+
+  End If
+Return
+
+getDudeShapes:
+AMIGA
+
+LoadBitMap 0,"amiga:thedude/assets/shapes_wip.pic",0
 Use BitMap 0
 
 ; Cut the shapes we need for the gameplay
@@ -101,58 +161,5 @@ For x = 0 To 2
   GetaShape x+2,((2-x)*#DUDE_WIDTH)+(2-x)+1, 1, #DUDE_WIDTH, #DUDE_HEIGHT
 Next
 
-BLITZ
-
-Slice 0,44,320,256,$fff8,5,0,32,320,320
-Show 0
-Use Palette 0
-
-
-bitm.b=0
-
-NEWTYPE .dude
- x.q
- y.q
- s.b
-End NEWTYPE
-
-dudeShape = 0
-
-shapeIndex = 0
-shapeDelta = 1
-shapeWait = 0
-shapeFramesWait=4
-
-
-posX = 20
-
-While(Joyb(0)=0)
-  Blit shapeIndex,posX,50
-  Gosub doubleBuf
-
-  shapeWait = shapeWait + 1
-  If shapeWait = shapeFramesWait
-
-    shapeIndex = shapeIndex+shapeDelta
-    If shapeIndex = 3 OR shapeIndex=-1
-      shapeDelta = shapeDelta * -1
-      shapeIndex = shapeIndex+shapeDelta
-    End If
-    shapeWait=0
-
-  End If
-  VWait
-  If posX=300
-    posX=20
-  End If
-Wend
-End
-
-
-doubleBuf:
-  Show bitm
-  bitm = 1-bitm
-  Use BitMap bitm
-  Cls
 Return
 
