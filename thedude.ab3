@@ -14,7 +14,7 @@
 ; MakeSmallest    = 0
 ; FuncOptimize    = 1
 ; Version         = 0.0.0
-; NumberOfBuilds  = 63
+; NumberOfBuilds  = 93
 ; 
 ; Debugger
 ; -------------------------------------------------------
@@ -30,8 +30,8 @@
 ; 
 ; Editor
 ; -------------------------------------------------------
-; CursorLine      = 35
-; CursorColumn    = 12
+; CursorLine      = 93
+; CursorColumn    = 5
 ; LabelSearch     = ""
 ; LabelRemark     = 1
 ; LabelAll        = 0
@@ -103,16 +103,44 @@ bitm.b=0
 ; all of this should go into a type
 
 dudeShape = 0
+
+#STATE_IDLE = 0
+#STATE_WALK = 1
+#STATE_JUMP = 2
+#STATE_FALL = 3
+
+dudeState = #STATE_IDLE
+
 shapeIndex = 0
 shapeDelta = 1
 shapeWait = 0
 shapeFramesWait=4
+
+posX = 160
+posY = 192
+
+jumpVelocity = -5
+jumpDuration = 0
 
 
 ; game loop
 
 While(Joyb(0)=0)
   Gosub moveDude
+  Line 0,200,319,200,2
+
+If dudeState<>#STATE_JUMP
+
+  If Joyx(1)=0 Then dudeState=#STATE_IDLE
+
+
+  If Joyx(1)=1 Then posX=QWrap(posX+1,0,319)
+  If Joyx(1)=-1 Then posX=QWrap(posX-1,0,319)
+
+  If Joyy(1)=-1 Then dudeState=#STATE_JUMP
+  If Joyx(1)<>0 AND dudeState<>#STATE_JUMP Then dudeState=#STATE_WALK
+EndIf
+
   Gosub doubleBuf
 
   VWait
@@ -129,18 +157,35 @@ Return
 
 
 .moveDude
-  Blit shapeIndex,posX,50
+  Blit shapeIndex,posX,posY
   shapeWait = shapeWait + 1
   If shapeWait = shapeFramesWait
+   Select dudeState
+     Case #STATE_IDLE
+       shapeIndex = shapeIndex+shapeDelta
+       If shapeIndex = 3 OR shapeIndex=-1
+         shapeDelta = shapeDelta * -1
+         shapeIndex = shapeIndex+shapeDelta
+       End If
+     Case #STATE_WALK
+       shapeIndex=0
+     Case #STATE_JUMP
+       shapeIndex = 0
 
-    shapeIndex = shapeIndex+shapeDelta
-    If shapeIndex = 3 OR shapeIndex=-1
-      shapeDelta = shapeDelta * -1
-      shapeIndex = shapeIndex+shapeDelta
-    End If
-    shapeWait=0
+       posY=posY+jumpVelocity
+       jumpVelocity=jumpVelocity+1
+       If Abs(jumpVelocity)>4 Then shapeIndex=0
+       If Abs(jumpVelocity)>2 Then shapeIndex=1
+       If Abs(jumpVelocity)<=2 Then shapeIndex=2
 
-  End If
+       If jumpVelocity=6
+         jumpVelocity=-5
+         dudeState=#STATE_IDLE
+         shapeIndex=0
+       EndIf
+   End Select
+   shapeWait=0
+   EndIf
 Return
 
 getDudeShapes:
