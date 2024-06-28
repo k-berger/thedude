@@ -14,7 +14,7 @@
 ; MakeSmallest    = 0
 ; FuncOptimize    = 1
 ; Version         = 0.0.0
-; NumberOfBuilds  = 93
+; NumberOfBuilds  = 100
 ; 
 ; Debugger
 ; -------------------------------------------------------
@@ -30,8 +30,8 @@
 ; 
 ; Editor
 ; -------------------------------------------------------
-; CursorLine      = 93
-; CursorColumn    = 5
+; CursorLine      = 95
+; CursorColumn    = 1
 ; LabelSearch     = ""
 ; LabelRemark     = 1
 ; LabelAll        = 0
@@ -110,6 +110,7 @@ dudeShape = 0
 #STATE_FALL = 3
 
 dudeState = #STATE_IDLE
+dudeAnger = 0
 
 shapeIndex = 0
 shapeDelta = 1
@@ -121,6 +122,7 @@ posY = 192
 
 jumpVelocity = -5
 jumpDuration = 0
+released=1
 
 
 ; game loop
@@ -130,6 +132,13 @@ While(Joyb(0)=0)
   Line 0,200,319,200,2
 
 If dudeState<>#STATE_JUMP
+
+  If Joyb(1)=1 AND released=1
+    dudeAnger = (dudeAnger+1) MOD 3
+    released = 0
+  EndIf
+  If Joyb(1)=0 Then released=1
+
 
   If Joyx(1)=0 Then dudeState=#STATE_IDLE
 
@@ -157,9 +166,9 @@ Return
 
 
 .moveDude
-  Blit shapeIndex,posX,posY
+  Blit shapeIndex+(dudeAnger*4),posX,posY
   shapeWait = shapeWait + 1
-  If shapeWait = shapeFramesWait
+  If shapeWait = shapeFramesWait-dudeAnger
    Select dudeState
      Case #STATE_IDLE
        shapeIndex = shapeIndex+shapeDelta
@@ -196,14 +205,13 @@ Use BitMap 0
 
 ; Cut the shapes we need for the gameplay
 
-
-For x = 0 To 2
-  GetaShape x,(x*#DUDE_WIDTH)+x+1, 1, #DUDE_WIDTH, #DUDE_HEIGHT
-Next
-
-
-For x = 0 To 2
-  GetaShape x+2,((2-x)*#DUDE_WIDTH)+(2-x)+1, 1, #DUDE_WIDTH, #DUDE_HEIGHT
+For a = 0 To 2
+  For x = 0 To 2
+    GetaShape (a*4)+x,(x*#DUDE_WIDTH)+x+1, (a*#DUDE_HEIGHT)+a+1, #DUDE_WIDTH, #DUDE_HEIGHT
+  Next
+  For x = 0 To 2
+    GetaShape (a*4)+x+2,((2-x)*#DUDE_WIDTH)+(2-x)+1, (a*#DUDE_HEIGHT)+a+1, #DUDE_WIDTH, #DUDE_HEIGHT
+  Next
 Next
 
 Return
