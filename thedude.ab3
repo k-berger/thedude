@@ -14,7 +14,7 @@
 ; MakeSmallest    = 0
 ; FuncOptimize    = 1
 ; Version         = 0.0.0
-; NumberOfBuilds  = 105
+; NumberOfBuilds  = 113
 ; 
 ; Debugger
 ; -------------------------------------------------------
@@ -30,8 +30,8 @@
 ; 
 ; Editor
 ; -------------------------------------------------------
-; CursorLine      = 97
-; CursorColumn    = 17
+; CursorLine      = 93
+; CursorColumn    = 1
 ; LabelSearch     = ""
 ; LabelRemark     = 1
 ; LabelAll        = 0
@@ -125,12 +125,17 @@ jumpVelocity = -5
 jumpDuration = 0
 released=1
 
+canMoveLeft = True
+canMoveRight = True
+
 
 ; game loop
 
 While(Joyb(0)=0)
-  Gosub moveDude
-  Line 0,200,319,200,2
+  Gosub drawTerrain
+  Gosub drawDude
+
+    Gosub checkMobility
 
 If dudeState<>#STATE_JUMP
 
@@ -144,8 +149,8 @@ If dudeState<>#STATE_JUMP
   If Joyx(1)=0 Then dudeState=#STATE_IDLE
 
 
-  If Joyx(1)=1 Then posX=QWrap(posX+1,0,319)
-  If Joyx(1)=-1 Then posX=QWrap(posX-1,0,319)
+  If Joyx(1)=1 AND canMoveRight Then posX=QWrap(posX+1,0,319)
+  If Joyx(1)=-1 AND canMoveLeft Then posX=QWrap(posX-1,0,319)
 
   If Joyy(1)=-1 Then dudeState=#STATE_JUMP
   If Joyx(1)<>0 AND dudeState<>#STATE_JUMP Then dudeState=#STATE_WALK
@@ -158,9 +163,24 @@ EndIf
   VWait
 Wend
 End
+.drawTerrain:
+  Line 0,200,319,200,2
+  Line 40,200,40,150,2
+  Line 180,200,180,150,2
+Return
+
+.checkMobility:
+  left = Point (posX-1,posY+2)
+  right = Point(posX+#DUDE_WIDTH,posY+2)
+
+  canMoveLeft =  NOT left > 0
+  canMoveRight = NOT right> 0
 
 
-doubleBuf:
+Return
+
+
+.doubleBuf:
   Show bitm
   bitm = 1-bitm
   Use BitMap bitm
@@ -168,7 +188,7 @@ doubleBuf:
 Return
 
 
-.moveDude
+.drawDude
   Blit shapeIndex+(dudeAnger*4),posX,posY
   shapeWait = shapeWait + 1
   If shapeWait >= shapeFramesWait-dudeAnger
@@ -200,25 +220,25 @@ Return
    EndIf
 Return
 
-printState:
-If #DEBUG = 0 Then Return
+.printState:
+  If #DEBUG = 0 Then Return
 
 
 
-BitMapOutput bitm
-Locate 1,1
-Colour 12
+  BitMapOutput bitm
+  Locate 1,1
+  Colour 12
 
-state$ = ""
-Select dudeState
-  Case #STATE_IDLE
-   state$ = "Idle"
-  Case #STATE_WALK
-   state$ = "Walking"
-  Case #STATE_JUMP
-   state$ = "Jumping"
-End Select
-NPrint state$
+  state$ = ""
+  Select dudeState
+    Case #STATE_IDLE
+     state$ = "Idle"
+    Case #STATE_WALK
+     state$ = "Walking"
+    Case #STATE_JUMP
+     state$ = "Jumping"
+  End Select
+  NPrint state$
 Return
 
 getDudeShapes:
